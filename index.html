@@ -4,20 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGIS - Carbon Trading Potential Index Malang</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Proj4js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- LOGIN SCREEN -->
 <div class="login-container" id="loginScreen">
     <div class="login-box">
-        <h2>🌿 WebGIS CTPI Malang</h2>
+        <h2>🌿 WebGIS Perdagangan Karbon</h2>
         <div id="formArea">
             <input type="text" id="loginUser" placeholder="Username" value="admin">
             <input type="password" id="loginPass" placeholder="Password" value="admin">
@@ -35,7 +31,6 @@
     </div>
 </div>
 
-<!-- LOADING OVERLAY -->
 <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-container">
         <p>🚗 Memuat data geospasial...</p>
@@ -45,12 +40,11 @@
     </div>
 </div>
 
-<!-- MAIN APP -->
 <div class="app-container" id="appContainer">
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>🌿 WebGIS CTPI</h2>
-            <p>Kabupaten Malang</p>
+            <h2>🌿 WebGIS Malang</h2>
+            <p>Carbon Trading Potential Index</p>
         </div>
         <button class="info-button" id="infoBtn">📖 Tentang Aplikasi</button>
         <div class="info-card">
@@ -78,17 +72,17 @@
             <div class="legend-item"><div class="color-box" style="background:#ffc107;"></div> Kurang Berpotensi</div>
             <div class="legend-item"><div class="color-box" style="background:#f44336;"></div> Tidak Berpotensi</div>
         </div>
-        <div class="footer-note">Klik poligon untuk detail & efek asap</div>
+        <div class="footer-note">Klik poligon untuk detail & efek asap 3D</div>
     </div>
     <div class="map-container"><div id="map"></div></div>
 </div>
 
 <div id="infoPopup" class="info-panel-popup">
     <strong>🌍 Tentang Aplikasi</strong><br>
-    WebGIS ini menampilkan Carbon Trading Potential Index (CTPI) berbasis indikator biofisik dan nilai ekonomi karbon.<br>
+    WebGIS ini menghitung potensi karbon dan nilai ekonomi berdasarkan indikator CTPI.<br>
     ✅ Klik desa → lihat detail lengkap.<br>
-    ✅ Klik "Analisis & Rekomendasi" untuk saran.<br>
-    <button id="closeInfoBtn">Tutup</button>
+    ✅ Klik "Analisis & Rekomendasi" untuk penjelasan.<br>
+    <button id="closeInfoBtn" style="margin-top:8px; background:#4caf50; border:none; padding:4px 10px; border-radius:20px; color:white; cursor:pointer;">Tutup</button>
 </div>
 
 <script src="script.js"></script>

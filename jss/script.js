@@ -1,8 +1,7 @@
-// ==================== REGISTRASI & LOGIN (localStorage) ====================
+// ==================== LOGIN & REGISTER ====================
 if (!localStorage.getItem('users')) {
     localStorage.setItem('users', JSON.stringify([{ username: 'admin', password: 'admin' }]));
 }
-
 const loginScreen = document.getElementById('loginScreen');
 const appContainer = document.getElementById('appContainer');
 const loadingOverlay = document.getElementById('loadingOverlay');
@@ -19,7 +18,6 @@ document.getElementById('showLogin').onclick = () => {
     loginForm.style.display = 'block';
     document.getElementById('loginMsg').innerText = '';
 };
-
 document.getElementById('loginBtn').onclick = () => {
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
@@ -28,17 +26,12 @@ document.getElementById('loginBtn').onclick = () => {
         loginScreen.style.opacity = '0';
         setTimeout(() => {
             loginScreen.style.display = 'none';
-            showLoading(() => {
-                initMapAndData();
-                hideLoading();
-                appContainer.style.display = 'flex';
-            });
+            showLoading(() => { initMapAndData(); hideLoading(); appContainer.style.display = 'flex'; });
         }, 500);
     } else {
         document.getElementById('loginMsg').innerText = 'Username/password salah!';
     }
 };
-
 document.getElementById('registerBtn').onclick = () => {
     const newUser = document.getElementById('regUser').value.trim();
     const newPass = document.getElementById('regPass').value.trim();
@@ -58,18 +51,16 @@ document.getElementById('registerBtn').onclick = () => {
     }
     users.push({ username: newUser, password: newPass });
     localStorage.setItem('users', JSON.stringify(users));
-    const msg = document.getElementById('loginMsg');
-    msg.style.color = 'green';
-    msg.innerText = 'Pendaftaran berhasil! Silakan login.';
+    document.getElementById('loginMsg').style.color = 'green';
+    document.getElementById('loginMsg').innerText = 'Pendaftaran berhasil! Silakan login.';
     setTimeout(() => {
         registerForm.style.display = 'none';
         loginForm.style.display = 'block';
-        msg.innerText = '';
+        document.getElementById('loginMsg').innerText = '';
     }, 1500);
 };
 
-// Loading animation
-function showLoading(callback) {
+function showLoading(cb) {
     loadingOverlay.style.visibility = 'visible';
     const car = document.getElementById('movingCar');
     const fill = document.getElementById('progressFill');
@@ -97,17 +88,16 @@ function showLoading(callback) {
             }
             if (width >= 100) {
                 clearInterval(interval);
-                if (callback) callback();
+                if (cb) cb();
             }
         }, 80);
     }, 100);
 }
 function hideLoading() { loadingOverlay.style.visibility = 'hidden'; }
 
-// ==================== PROYEKSI & WARNA ====================
+// ==================== PROYEKSI ====================
 proj4.defs("EPSG:32749", "+proj=utm +zone=49 +south +datum=WGS84 +units=m +no_defs");
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
-
 function reprojectGeometry(geom) {
     if (geom.type === "Polygon") {
         geom.coordinates = geom.coordinates.map(ring => ring.map(c => proj4("EPSG:32749", "EPSG:4326", c)));
@@ -116,7 +106,6 @@ function reprojectGeometry(geom) {
     }
     return geom;
 }
-
 function getColor(kelas) {
     if (!kelas) return '#888';
     if (kelas === 'SANGAT BERPOTENSI') return '#1b5e20';
@@ -127,14 +116,17 @@ function getColor(kelas) {
     return '#3388ff';
 }
 
+let map, emissionChart, ndviChart, potensiChart;
+let geoJsonData, currentFeature = null;
+const analyzeBtn = document.getElementById('analyzeBtn');
+const analysisDiv = document.getElementById('analysisText');
+
 function formatNumber(num) { return num ? num.toLocaleString('id-ID') : '0'; }
 function formatRupiah(num) {
-    if (!num) return '0';
+    if (!num) return 'Rp 0';
     if (num >= 1e9) return 'Rp ' + (num / 1e9).toFixed(2) + ' Miliar';
-    if (num >= 1e6) return 'Rp ' + (num / 1e6).toFixed(2) + ' Juta';
-    return 'Rp ' + formatNumber(Math.round(num));
+    return 'Rp ' + Math.round(num).toLocaleString('id-ID');
 }
-
 function getDnbrCategory(val) {
     if (val === undefined) return 'Tidak ada';
     if (val < 0.1) return 'Rendah';
@@ -142,18 +134,10 @@ function getDnbrCategory(val) {
     return 'Tinggi';
 }
 
-let map, emissionChart, ndviChart, potensiChart;
-let geoJsonData, currentFeature = null;
-
-// ==================== ANALISIS ====================
-const analyzeBtn = document.getElementById('analyzeBtn');
-const analysisDiv = document.getElementById('analysisText');
-
 function showAnalysis() {
     if (!currentFeature) return;
     const p = currentFeature.properties;
     const carbonTon = (p.TOTAL_CARB || 0) / 1000;
-    const co2Ton = (p.TOTAL_CO2 || 0) / 1000;
     const ndvi = p.NDVI_MEANm || 0;
     const potensi = p.KELAS_CTPI || 'Tidak';
     const nilaiRp = p.CARBON_VAL || 0;
@@ -176,7 +160,6 @@ function showAnalysis() {
 }
 analyzeBtn.onclick = showAnalysis;
 
-// ==================== UPDATE CHARTS ====================
 function updateCharts(feature) {
     currentFeature = feature;
     analyzeBtn.style.display = 'block';
@@ -192,50 +175,33 @@ function updateCharts(feature) {
     const dnbr = p.dNBR_MEANm || 0;
     const ctpival = p.CTPIMEAN_m || 0;
     const nilaiRp = p.CARBON_VAL || 0;
-    const nilaiUsd = nilaiRp / 15000; // kurs asumsi 15.000
 
-    // Hitung indikator turunan jika tidak tersedia
-    // Carbon Availability = AGB + Carbon Pool (normalisasi)
-    const carbonAvail = (agb + carbonPool) / 2;
-    // Vegetation Condition = NDVI (normalisasi)
-    const vegCondition = ndvi;
-    // Carbon Risk = Carbon Loss + dNBR (normalisasi sederhana)
-    const carbonRisk = ((carbonLoss / 100) + (dnbr / 0.5)) / 2;
-    
     document.getElementById('selectedDetail').innerHTML = `
         <strong>${p.NAMOBJ || 'Desa'}</strong><br>
         Kecamatan: ${p.WADMKC || '-'}<br>
         <hr>
         📐 Luas: ${luasHa.toFixed(2)} ha<br>
-        📦 Total Karbon: ${carbonTon.toFixed(0)} ton C<br>
-        💨 Potensi CO₂e: ${co2Ton.toFixed(0)} ton<br>
-        💰 <span style="color:#ff9800;">${formatRupiah(nilaiRp)}</span><br>
-        <hr>
         🌳 AGB: ${agb.toFixed(2)} Mg/ha<br>
         💧 Carbon Pool Density: ${carbonPool.toFixed(2)} MgC/ha<br>
-        🌿 NDVI: ${ndvi.toFixed(3)}<br>
-        🔥 dNBR: ${dnbr.toFixed(3)} (${getDnbrCategory(dnbr)})<br>
+        📦 Total Karbon: ${carbonTon.toFixed(0)} ton C<br>
         ⚠️ Carbon Loss: ${carbonLoss.toFixed(2)} ton C<br>
-        <hr>
-        📊 CTPI: ${ctpival.toFixed(2)}<br>
-        🏷️ Kategori: ${p.KELAS_CTPI || '-'}<br>
-        <small>Carbon Availability: ${carbonAvail.toFixed(2)}<br>
-        Vegetation Condition: ${vegCondition.toFixed(2)}<br>
-        Carbon Risk: ${carbonRisk.toFixed(2)}</small>
+        🔥 dNBR: ${dnbr.toFixed(3)} (${getDnbrCategory(dnbr)})<br>
+        🌿 NDVI: ${ndvi.toFixed(3)}<br>
+        💨 Potensi CO₂e: ${co2Ton.toFixed(0)} ton<br>
+        📊 CTPI: ${ctpival.toFixed(2)} (${p.KELAS_CTPI || '-'})<br>
+        💰 <span style="color:#ff9800;">${formatRupiah(nilaiRp)}</span><br>
+        <small>*Berdasarkan data inventarisasi karbon</small>
     `;
-    
     if (emissionChart) emissionChart.destroy();
     const ctx1 = document.getElementById('emissionChart').getContext('2d');
     emissionChart = new Chart(ctx1, {
-        type: 'bar',
-        data: { labels: ['Karbon (ton C)', 'CO₂ (ton)'], datasets: [{ label: '', data: [carbonTon, co2Ton], backgroundColor: ['#4caf50', '#ff9800'], borderRadius: 8 }] },
+        type: 'bar', data: { labels: ['Karbon (ton C)', 'CO₂e (ton)'], datasets: [{ label: '', data: [carbonTon, co2Ton], backgroundColor: ['#4caf50', '#ff9800'], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: 'white' } }, x: { ticks: { color: 'white' } } } }
     });
     if (ndviChart) ndviChart.destroy();
     const ctx2 = document.getElementById('ndviChart').getContext('2d');
     ndviChart = new Chart(ctx2, {
-        type: 'bar',
-        data: { labels: ['AGB (Mg/ha)', 'NDVI'], datasets: [{ label: '', data: [agb, ndvi], backgroundColor: ['#2196f3', '#9c27b0'], borderRadius: 8 }] },
+        type: 'bar', data: { labels: ['AGB (Mg/ha)', 'NDVI'], datasets: [{ label: '', data: [agb, ndvi], backgroundColor: ['#2196f3', '#9c27b0'], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: 'white' } }, x: { ticks: { color: 'white' } } } }
     });
 }
@@ -248,14 +214,9 @@ function updatePieChartAll(features) {
     const colors = labels.map(l => getColor(l));
     if (potensiChart) potensiChart.destroy();
     const ctx = document.getElementById('potensiChart').getContext('2d');
-    potensiChart = new Chart(ctx, {
-        type: 'pie',
-        data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: 'white' }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: 'white', font: { size: 9 } } } } }
-    });
+    potensiChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: 'white' }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: 'white', font: { size: 9 } } } } } });
 }
 
-// ==================== EFEK ASAP 3D ====================
 function create3DSmoke(latlng) {
     const point = map.latLngToContainerPoint(latlng);
     const container = document.querySelector('.map-container');
@@ -275,14 +236,9 @@ function create3DSmoke(latlng) {
     }
 }
 
-// ==================== INIT MAP ====================
 function initMapAndData() {
     map = L.map('map').setView([-8.1, 112.6], 9);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap & CartoDB',
-        subdomains: 'abcd'
-    }).addTo(map);
-
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap & CartoDB', subdomains: 'abcd' }).addTo(map);
     fetch('Percobaan Webgis Tubes Aseli.geojson')
         .then(res => { if (!res.ok) throw new Error(); return res.json(); })
         .then(data => {
@@ -297,25 +253,10 @@ function initMapAndData() {
         })
         .catch(() => {
             // Data dummy jika file tidak ditemukan
-            const dummy = {
-                type: "FeatureCollection",
-                features: [{
-                    type: "Feature",
-                    properties: {
-                        NAMOBJ: "Contoh Desa", WADMKC: "Kec. Contoh", LUAS_AREA: 1000000,
-                        TOTAL_CARB: 500000, TOTAL_CO2: 1800000, AGBmean: 0.65, NDVI_MEANm: 0.72,
-                        KELAS_CTPI: "BERPOTENSI", CARBONPOOL: 84, CARBONLOSS: 12, dNBR_MEANm: 0.09,
-                        CTPIMEAN_m: 0.73, CARBON_VAL: 106800000
-                    },
-                    geometry: { type: "Polygon", coordinates: [[[112.5, -8.1], [112.6, -8.1], [112.6, -8.2], [112.5, -8.2], [112.5, -8.1]]] }
-                }]
-            };
+            const dummy = { type: "FeatureCollection", features: [{ type: "Feature", properties: { NAMOBJ: "Contoh Desa", WADMKC: "Kec. Contoh", LUAS_AREA: 1000000, TOTAL_CARB: 500000, TOTAL_CO2: 1800000, AGBmean: 0.65, NDVI_MEANm: 0.72, KELAS_CTPI: "BERPOTENSI", CARBONPOOL: 84, CARBONLOSS: 12, dNBR_MEANm: 0.09, CTPIMEAN_m: 0.73, CARBON_VAL: 106800000 }, geometry: { type: "Polygon", coordinates: [[[112.5, -8.1], [112.6, -8.1], [112.6, -8.2], [112.5, -8.2], [112.5, -8.1]]] } }] };
             geoJsonData = dummy;
             geoJsonData.features.forEach(f => f.geometry = reprojectGeometry(f.geometry));
-            L.geoJSON(geoJsonData, {
-                style: (f) => ({ fillColor: getColor(f.properties.KELAS_CTPI), weight: 1, opacity: 0.6, color: '#fff', fillOpacity: 0.6 }),
-                onEachFeature: (f, layer) => layer.on('click', (e) => { updateCharts(f); create3DSmoke(e.latlng); })
-            }).addTo(map).fitBounds();
+            L.geoJSON(geoJsonData, { style: (f) => ({ fillColor: getColor(f.properties.KELAS_CTPI), weight: 1, opacity: 0.6, color: '#fff', fillOpacity: 0.6 }), onEachFeature: (f, layer) => layer.on('click', (e) => { updateCharts(f); create3DSmoke(e.latlng); }) }).addTo(map).fitBounds();
             updatePieChartAll(geoJsonData.features);
             if (geoJsonData.features.length) updateCharts(geoJsonData.features[0]);
             alert('⚠️ File GeoJSON asli tidak ditemukan, menggunakan data contoh.');
