@@ -2,89 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Carbon Trading Potential Index Malang</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>Carbon Trade Potential Index Kabupaten Malang</title>
+
+    <link rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-<div class="login-container" id="loginScreen">
-    <div class="login-box">
-        <h2>🌿 WebGIS Perdagangan Karbon</h2>
-        <div id="formArea">
-            <input type="text" id="loginUser" placeholder="Username" value="admin">
-            <input type="password" id="loginPass" placeholder="Password" value="admin">
-            <button id="loginBtn">Masuk</button>
-            <div class="toggle-link" id="showRegister">Belum punya akun? Daftar</div>
-        </div>
-        <div id="registerArea" style="display:none;">
-            <input type="text" id="regUser" placeholder="Username baru">
-            <input type="password" id="regPass" placeholder="Password">
-            <input type="password" id="regConfirm" placeholder="Konfirmasi Password">
-            <button id="registerBtn">Daftar</button>
-            <div class="toggle-link" id="showLogin">Kembali ke Login</div>
-        </div>
-        <div id="loginMsg" class="error-msg"></div>
+
+<div id="sidebar">
+
+    <h2>🌳 Carbon Trade Potential Index</h2>
+
+    <p>
+        Kabupaten Malang
+    </p>
+
+    <div id="info">
+        Klik wilayah untuk melihat detail.
     </div>
+
+    <canvas id="chart"></canvas>
+
 </div>
 
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-container">
-        <p>🚗 Memuat data geospasial...</p>
-        <div class="progress-bar-bg"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="car-animation"><div class="car" id="movingCar">🚗💨</div></div>
-        <p id="loadingPercent">0%</p>
-    </div>
-</div>
+<div id="map"></div>
 
-<div class="app-container" id="appContainer">
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2>🌿 WebGIS Malang</h2>
-            <p>Carbon Trading Potential Index</p>
-        </div>
-        <button class="info-button" id="infoBtn">📖 Tentang Aplikasi</button>
-        <div class="info-card">
-            <h3>📍 Desa Terpilih</h3>
-            <div class="detail-content" id="selectedDetail"><i>Klik pada peta</i></div>
-            <button class="analyze-btn" id="analyzeBtn" style="display:none;">📊 Analisis & Rekomendasi</button>
-            <div id="analysisText" class="analysis-text"></div>
-        </div>
-        <div class="chart-card">
-            <h3>📊 Stok Karbon & CO₂ (ton)</h3>
-            <canvas id="emissionChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>🌱 Indeks Vegetasi & Biomassa</h3>
-            <canvas id="ndviChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>🥧 Distribusi Potensi Karbon</h3>
-            <canvas id="potensiChart"></canvas>
-        </div>
-        <div class="legend-colors">
-            <div class="legend-item"><div class="color-box" style="background:#1b5e20;"></div> Sangat Berpotensi</div>
-            <div class="legend-item"><div class="color-box" style="background:#4caf50;"></div> Berpotensi</div>
-            <div class="legend-item"><div class="color-box" style="background:#ff9800;"></div> Cukup Berpotensi</div>
-            <div class="legend-item"><div class="color-box" style="background:#ffc107;"></div> Kurang Berpotensi</div>
-            <div class="legend-item"><div class="color-box" style="background:#f44336;"></div> Tidak Berpotensi</div>
-        </div>
-        <div class="footer-note">Klik poligon untuk detail & efek asap 3D</div>
-    </div>
-    <div class="map-container"><div id="map"></div></div>
-</div>
+<script src="js/script.js"></script>
 
-<div id="infoPopup" class="info-panel-popup">
-    <strong>🌍 Tentang Aplikasi</strong><br>
-    WebGIS ini menghitung potensi karbon dan nilai ekonomi berdasarkan indikator CTPI.<br>
-    ✅ Klik desa → lihat detail lengkap.<br>
-    ✅ Klik "Analisis & Rekomendasi" untuk penjelasan.<br>
-    <button id="closeInfoBtn" style="margin-top:8px; background:#4caf50; border:none; padding:4px 10px; border-radius:20px; color:white; cursor:pointer;">Tutup</button>
-</div>
-
-<script src="script.js"></script>
 </body>
 </html>
